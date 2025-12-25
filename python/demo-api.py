@@ -100,6 +100,25 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated
 
+def roles_required(*allowed_roles):
+    
+    def decorator(f):
+        @wraps(f)
+        
+        def decorated(*args, **kwargs):
+            user = flask.g.user      # user info got from decoding the jwt on the @token_required
+            
+            if user.get('role') not in allowed_roles:
+                return flask.jsonify({
+                    'status': StatusCodes['unauthorized'],
+                    'errors': 'Access denied! You dont have credentials!',
+                    'results': None
+                }), 403
+            return f(*args, **kwargs)
+        
+        return decorated
+    return decorator
+
 
 ##########################################################
 ## ENDPOINTS
@@ -167,7 +186,7 @@ def login_user():
     
         user_id, stored_password, role = result
 
-        #use encrypted_blabla 
+        #ENCRYPT PASSWORDS ETC, SIMPLE FOR NOW
         
         if (password != stored_password):
             return flask.jsonify({
@@ -200,46 +219,59 @@ def login_user():
 
 @app.route('/dbproj/register/student', methods=['POST'])
 @token_required
+@roles_required("staff")
 def register_student():
-    user = flask.g.user  # token decodificado no @token_required
-
-    if user.get('user_type') != 'staff':
-        return flask.jsonify({
-            'status': StatusCodes['unauthorized'],
-            'errors': 'Only staff members can register students',
-            'results': None
-        })
-        
     data = flask.request.get_json()
+    
     username = data.get('username')
     email = data.get('email')
-    password = data.get('password')
+    password = data.get("password")
     date_of_birth_str = data.get('date_of_birth')
+    district = data.get("district")
     
-    date_of_birth = datetime.datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
-    
-    if not username or not email or not password:
+    if not username or not email or not password or not date_of_birth_str or not district:
         return flask.jsonify({
             'status': StatusCodes['api_error'],
-            'errors': 'Username, email, and password are required',
+            'errors': 'Missing required fields!',
+            'results': None
+        })
+    
+    try:
+        date_of_birth = datetime.datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
+    except ValueError:
+        return flask.jsonify({
+            'status': StatusCodes['api_error'],
+            'errors': 'Invalid date format (YYYY-MM-DD)',
             'results': None
         })
 
     conn = db_connection()
     if conn is None:
-        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Erro de conexão com o banco', 'results': None})
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
 
     try:
         cur = conn.cursor()
-        cur.execute('INSERT INTO person (user_name, email, password,date_of_birth,user_type) VALUES (%s, %s, %s,%s, %s) RETURNING id',
-                    (username, email, password,date_of_birth,'student'))
+        cur.execute("""
+                    INSERT INTO person (name, email, password,date_of_birth) 
+                    VALUES (%s, %s, %s,%s) 
+                    RETURNING id 
+                    """, (username, email, password, date_of_birth))
+        
         user_id = cur.fetchone()[0]
         
-        cur.execute('INSERT INTO student_financialaccount (district,person_id,financialaccount_tuition_charges,financialaccount_fees_charges, financialaccount_other_charges) VALUES (%s,%s,%s,%s,%s)',(data['district'],user_id,0,0,0))
+        cur.execute("""
+            INSERT INTO student (person_id, district)
+            VALUES (%s, %s)
+        """, (user_id, district))
+        
         conn.commit()
-        response = {'status': StatusCodes['success'], 'errors': None, 'results': user_id}
-        return flask.jsonify(response)
-    
+        
+        return flask.jsonify({
+            'status': StatusCodes['success'],
+            'errors': None,
+            'results': {'person_id': user_id, 'district': district}
+        })
+        
     except (Exception, psycopg2.DatabaseError) as error:
         conn.rollback()
         logger.error(f'POST /dbproj/register/student - erro: {error}')
@@ -252,59 +284,66 @@ def register_student():
 
 @app.route('/dbproj/register/staff', methods=['POST'])
 @token_required
+@roles_required("staff")
 def register_staff():
-    user = flask.g.user  # token decodificado no @token_required
-
-    if user.get('user_type') != 'staff':
-        return flask.jsonify({
-            'status': StatusCodes['unauthorized'],
-            'errors': 'Only staff members can register other staff',
-            'results': None
-        })
-
     data = flask.request.get_json()
+
+
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
     date_of_birth_str = data.get('date_of_birth')
-    date_of_birth = datetime.datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
     hire_date_str = data.get('hire_date')
-    hire_date = datetime.datetime.strptime(hire_date_str, '%Y-%m-%d').date()
     salary = data.get('salary')
     status = data.get('status')
     roll = data.get('roll')
-    
+
+       
     if not username or not email or not password or not date_of_birth_str or not hire_date_str or not salary or not status or not roll:
         return flask.jsonify({
             'status': StatusCodes['api_error'],
-            'errors': 'Username, email, password ,  date_of_birth , hire_date , salary , status and roll are required',
-            'results': None
-        })
-
-    conn = db_connection()
-    if conn is None:
-        return flask.jsonify({
-            'status': StatusCodes['internal_error'],
-            'errors': 'Erro de conexão com o banco',
+            'errors': 'Missing required fields!',
             'results': None
         })
 
     try:
-        cur = conn.cursor()
-        cur.execute('INSERT INTO person (user_name, email, password, date_of_birth, user_type) VALUES (%s, %s, %s, %s, %s) RETURNING id',(username, email, password, date_of_birth, 'staff'))
-        person_id = cur.fetchone()[0]
+        date_of_birth = datetime.datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
+        hire_date = datetime.datetime.strptime(hire_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return flask.jsonify({
+            'status': StatusCodes['api_error'],
+            'errors': 'Invalid date format (YYYY-MM-DD)',
+            'results': None
+        })
         
-        cur.execute('INSERT INTO employee (person_id,hire_date,salary,status) VALUES (%s, %s, %s, %s) RETURNING employee_id',(person_id, hire_date, salary, status))
+    conn = db_connection()
+    if conn is None:
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
 
-        employee_id = cur.fetchone()
-        cur.execute('INSERT INTO staff (roll,employee_person_id) VALUES (%s,%s)',(roll,person_id))
+    try: 
+        cur = conn.cursor()
+        cur.execute("""
+                    INSERT INTO person (name, email, password,date_of_birth) 
+                    VALUES (%s, %s, %s,%s) 
+                    RETURNING id 
+                    """, (username, email, password, date_of_birth))
+        
+        user_id = cur.fetchone()[0]
+        
+        cur.execute("""INSERT INTO employee (person_id,hire_date,salary,status)
+                    VALUES (%s, %s, %s, %s) 
+                    """,(user_id, hire_date, salary, status))
+
+        cur.execute("""
+                    INSERT INTO staff (roll,employee_person_id)
+                    VALUES (%s,%s)""",(roll,user_id))
 
         conn.commit()
         
         return flask.jsonify({
             'status': StatusCodes['success'],
             'errors': None,
-            'results': person_id
+            'results': user_id
         })
 
     except (Exception, psycopg2.DatabaseError) as error:
@@ -321,59 +360,64 @@ def register_staff():
 
 @app.route('/dbproj/register/instructor', methods=['POST'])
 @token_required
+@roles_required("staff")
 def register_instructor():
-    user = flask.g.user  # token decodificado no @token_required
-
-    if user.get('user_type') != 'staff':
-        return flask.jsonify({
-            'status': StatusCodes['unauthorized'],
-            'errors': 'Only staff members can register other staff',
-            'results': None
-        })
-
     data = flask.request.get_json()
+
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
     date_of_birth_str = data.get('date_of_birth')
-    date_of_birth = datetime.datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
     hire_date_str = data.get('hire_date')
-    hire_date = datetime.datetime.strptime(hire_date_str, '%Y-%m-%d').date()
     salary = data.get('salary')
     status = data.get('status')
-
-    
+       
     if not username or not email or not password or not date_of_birth_str or not hire_date_str or not salary or not status:
         return flask.jsonify({
             'status': StatusCodes['api_error'],
-            'errors': 'Username, email, password ,  date_of_birth , hire_date , salary and status are required',
-            'results': None
-        })
-
-    conn = db_connection()
-    if conn is None:
-        return flask.jsonify({
-            'status': StatusCodes['internal_error'],
-            'errors': 'Erro de conexão com o banco',
+            'errors': 'Missing required fields!',
             'results': None
         })
 
     try:
-        cur = conn.cursor()
-        cur.execute('INSERT INTO person (user_name, email, password, date_of_birth, user_type) VALUES (%s, %s, %s, %s, %s) RETURNING id',(username, email, password, date_of_birth, 'instructor'))
-        person_id = cur.fetchone()
+        date_of_birth = datetime.datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
+        hire_date = datetime.datetime.strptime(hire_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return flask.jsonify({
+            'status': StatusCodes['api_error'],
+            'errors': 'Invalid date format (YYYY-MM-DD)',
+            'results': None
+        })
         
-        cur.execute('INSERT INTO employee (person_id,hire_date,salary,status) VALUES (%s, %s, %s, %s) RETURNING employee_id',(person_id, hire_date, salary, status))
+    conn = db_connection()
+    if conn is None:
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
 
-        employee_id = cur.fetchone()
-        cur.execute('INSERT INTO instructor (employee_person_id) VALUES (%s)',(person_id))
+    try: 
+        cur = conn.cursor()
+        cur.execute("""
+                    INSERT INTO person (name, email, password,date_of_birth) 
+                    VALUES (%s, %s, %s,%s) 
+                    RETURNING id 
+                    """, (username, email, password, date_of_birth))
+        
+        user_id = cur.fetchone()[0]
+        
+        cur.execute("""INSERT INTO employee (person_id,hire_date,salary,status)
+                    VALUES (%s, %s, %s, %s) 
+                    """,(user_id, hire_date, salary, status))
+
+        cur.execute("""
+                    INSERT INTO instructor (employee_person_id)
+                    VALUES (%s)
+                    """,(user_id,))
 
         conn.commit()
         
         return flask.jsonify({
             'status': StatusCodes['success'],
             'errors': None,
-            'results': person_id
+            'results': user_id
         })
 
     except (Exception, psycopg2.DatabaseError) as error:
@@ -390,19 +434,11 @@ def register_instructor():
 
 @app.route('/dbproj/enroll_degree/<degree_id>', methods=['POST'])
 @token_required
+@roles_required("staff")
 def enroll_degree(degree_id):
-    
-    user = flask.g.user  # token decodificado no @token_required
-
-    # Apenas staff pode matricular estudantes em graus
-    if user.get('user_type') != 'staff':
-        return flask.jsonify({
-            'status': StatusCodes['unauthorized'],
-            'errors': 'Only staff members can enroll students in degrees',
-            'results': None
-        })
 
     data = flask.request.get_json()
+    
     student_id = data.get('student_id')
     date_str = data.get('date')
 
