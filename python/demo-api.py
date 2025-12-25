@@ -439,42 +439,47 @@ def enroll_degree(degree_id):
 
     data = flask.request.get_json()
     
-    student_id = data.get('student_id')
+    person_id = data.get('student_id')
     date_str = data.get('date')
-
-    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
     
-    if not student_id or not date:
+    if not person_id or not date_str:
         return flask.jsonify({
             'status': StatusCodes['api_error'],
             'errors': 'Student ID and date are required',
             'results': None
         }), 400
+        
+    try:
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return flask.jsonify({
+            'status': StatusCodes['api_error'],
+            'errors': 'Invalid date format (YYYY-MM-DD)',
+            'results': None
+        })
+        
 
     conn = db_connection()
     if conn is None:
-        return flask.jsonify({
-            'status': StatusCodes['internal_error'],
-            'errors': 'Erro de conexão com o banco',
-            'results': None
-        }), 500
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
 
     try:
         cur = conn.cursor()
-        # Insere matrícula do estudante no grau
-        cur.execute(
-            'INSERT INTO enrollment (enrollment_date_,status,student_financialaccount_person_id) VALUES (%s, %s, %s) RETURNING enrollment_id',(date,"ON", student_id))
+        
+        cur.execute("""INSERT INTO enrollment (enrollment_date_,status,student_person_id)
+                    VALUES (%s, %s, %s) 
+                    RETURNING enrollment_id""",(date,"ON", person_id))
+        
         enrollment_id = cur.fetchone()
         
-        cur.execute(
-            'INSERT INTO degree_enrollment (average_grade,approved_courses_count, degree_degree_id , enrollment_enrollment_id) VALUES (%s, %s, %s,%s)',
-            (0, 0, degree_id,enrollment_id)
-        )
-        
+        cur.execute("""INSERT INTO degree_enrollment (average_grade,approved_courses_count, degree_degree_id , enrollment_enrollment_id)
+                    VALUES (%s, %s, %s,%s)""",(0.0, 0, degree_id,enrollment_id))
         
         conn.commit()
-        response = {'status': StatusCodes['success'], 'errors': None, 'results': None}
+        
+        response = {'status': StatusCodes['success'], 'errors': None, 'results': "Student enrolled in degree!"}
         return flask.jsonify(response), 201
+    
     except (Exception, psycopg2.DatabaseError) as error:
         conn.rollback()
         logger.error(f'POST /dbproj/enroll_degree/{degree_id} - erro: {error}')
@@ -490,52 +495,54 @@ def enroll_degree(degree_id):
 
 @app.route('/dbproj/enroll_activity/<activity_id>', methods=['POST'])
 @token_required
+@roles_required("student")
 def enroll_activity(activity_id):
-    user = flask.g.user  # token decodificado no @token_required
-
-    # Apenas estudantes podem se inscrever em atividades
-    if user.get('user_type') != 'student':
-        return flask.jsonify({
-            'status': StatusCodes['unauthorized'],
-            'errors': 'Only students can enroll in activities',
-            'results': None
-        }), 401
 
     data = flask.request.get_json()
-    student_id = data.get('student_id')
+    
+    person_id = data.get('student_id')
     date_str = data.get('date')
 
-    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-
-    if not student_id:
+    if not person_id or not date_str:
         return flask.jsonify({
             'status': StatusCodes['api_error'],
-            'errors': 'Student ID not found in token',
+            'errors': 'Student ID and date are required',
             'results': None
-        }), 400
-
+    }), 400
+        
+    try:
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return flask.jsonify({
+            'status': StatusCodes['api_error'],
+            'errors': 'Invalid date format (YYYY-MM-DD)',
+            'results': None
+        })
+        
+        
     conn = db_connection()
     if conn is None:
-        return flask.jsonify({
-            'status': StatusCodes['internal_error'],
-            'errors': 'Erro de conexão com o banco',
-            'results': None
-        }), 500
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
 
     try:
         cur = conn.cursor()
         
-        cur.execute(
-            'INSERT INTO enrollment (enrollment_date_,status,student_financialaccount_person_id) VALUES (%s, %s, %s) RETURNING enrollment_id',(date,"ON", student_id))
+        cur.execute("""INSERT INTO enrollment (enrollment_date_,status,student_person_id)
+                    VALUES (%s, %s, %s) 
+                    RETURNING enrollment_id""",(date,"ON", person_id))
+        
         enrollment_id = cur.fetchone()
         
         cur.execute(
             'INSERT INTO extraactivity_enrollment (extraactivity_activity_id, enrollment_enrollment_id) VALUES (%s, %s)',
             (activity_id, enrollment_id)
         )
+        
         conn.commit()
-        response = {'status': StatusCodes['success'], 'errors': None, 'results': None}
+        
+        response = {'status': StatusCodes['success'], 'errors': None, 'results': "Student enrolled in extra_activity"}
         return flask.jsonify(response)
+    
     except (Exception, psycopg2.DatabaseError) as error:
         conn.rollback()
         logger.error(f'POST /dbproj/enroll_activity/{activity_id} - erro: {error}')
@@ -544,12 +551,14 @@ def enroll_activity(activity_id):
             'errors': str(error),
             'results': None
         })
+        
     finally:
         if conn is not None:
             conn.close()
 
 @app.route('/dbproj/enroll_course_edition/<course_edition_id>', methods=['POST'])
 @token_required
+@roles_required("student")
 def enroll_course_edition(course_edition_id):
     user = flask.g.user  # token decodificado no @token_required
 
@@ -622,30 +631,58 @@ def enroll_course_edition(course_edition_id):
             conn.close()
 
 
-@app.route('/dbproj/delete_details/<student_id>', methods=['DELETE'])
+@app.route('/dbproj/delete_details/<person_id>', methods=['DELETE'])
 @token_required
-def delete_student(student_id):
-    user = flask.g.user
-    if user.get('user_type') != 'staff':
-        return flask.jsonify({'status': StatusCodes['unauthorized'], 'errors': 'Only staff can delete students', 'results': None}), 401
+@roles_required("staff")
+def delete_student(person_id):
 
     conn = db_connection()
     if conn is None:
-        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Erro de conexão com o banco', 'results': None}), 500
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
+    
     try:
         cur = conn.cursor()
-        cur.execute('DELETE FROM grades WHERE student_id = %s', (student_id,))
-        cur.execute('DELETE FROM activity_enrollment WHERE student_id = %s', (student_id,))
-        cur.execute('DELETE FROM class_enrollment WHERE student_id = %s', (student_id,))
-        cur.execute('DELETE FROM degree_enrollment WHERE student_id = %s', (student_id,))
-        cur.execute('DELETE FROM person WHERE id = %s', (student_id,))
+        
+
+        cur.execute("""
+            DELETE FROM degree_enrollment de
+            USING enrollment e
+            WHERE de.enrollment_enrollment_id = e.enrollment_id
+              AND e.student_person_id = %s
+        """, (person_id,))
+        
+        cur.execute("""
+            DELETE FROM extraactivity_enrollment ee
+            USING enrollment e
+            WHERE ee.enrollment_enrollment_id = e.enrollment_id
+              AND e.student_person_id = %s
+        """, (person_id,))
+        
+        cur.execute("""
+            DELETE FROM enrollment
+            WHERE student_person_id = %s
+        """, (person_id,))
+
+        cur.execute("""
+            DELETE FROM student
+            WHERE person_id = %s
+        """, (person_id,))
+        
+        cur.execute("""
+            DELETE FROM person
+            WHERE id = %s
+        """, (person_id,))
+        
         conn.commit()
-        response = {'status': StatusCodes['success'], 'errors': None, 'results': None}
+        
+        response = {'status': StatusCodes['success'], 'errors': None, 'results': "Student eliminated!"}
         return flask.jsonify(response), 200
+        
     except Exception as error:
         conn.rollback()
-        #logger.error(f'DELETE /dbproj/delete_details/{student_id} - erro: {error}')
+        logger.error(f'DELETE /dbproj/delete_details/{person_id} - erro: {error}')
         return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': str(error), 'results': None}), 500
+        
     finally:
         if conn is not None:
             conn.close()
