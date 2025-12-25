@@ -19,14 +19,20 @@
 import flask
 import logging
 import psycopg2
-import time
-import random
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 import datetime
 import jwt
 from functools import wraps
+import hashlib
+from flask import request
 
 app = flask.Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'some_jwt_secret_key'
+
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 StatusCodes = {
     'success': 200,
@@ -41,15 +47,18 @@ StatusCodes = {
 ##########################################################
 
 def db_connection():
-    db = psycopg2.connect(
-        user='f',
-        password='f',  
-        host='f',
-        port='f',
-        database='f'
-    )
-
-    return db
+    
+    try: 
+        return psycopg2.connect(
+            host = os.getenv("DB_HOST"),
+            port= os.getenv("DB_PORT"),
+            database= os.getenv("DB_NAME"),
+            user= os.getenv("DB_USER"),
+            password= os.getenv("DB_PASSWORD")
+        )
+    except:
+        print("Couldn't connect to database!")
+        
 
 ##########################################################
 ## AUTHENTICATION HELPERS
@@ -65,7 +74,7 @@ def token_required(f):
                 'status': StatusCodes['unauthorized'],
                 'errors': 'Token is missing!',
                 'results': None
-            })
+            }),401
 
         try:
             # Remover 'Bearer ' do início se existir
@@ -74,6 +83,7 @@ def token_required(f):
             
             data = jwt.decode(token,app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
             flask.g.user = data  # opcional: guardar dados do utilizador
+            
         except jwt.ExpiredSignatureError:
             return flask.jsonify({
                 'status': StatusCodes['unauthorized'],
@@ -95,45 +105,98 @@ def token_required(f):
 ## ENDPOINTS
 ##########################################################
 
+def encrypt_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
 @app.route('/dbproj/user', methods=['PUT'])
 def login_user():
-    data = flask.request.get_json()
+    data = request.get_json()
+
+    if not data:
+        return flask.jsonify({
+            'status': StatusCodes['api_error'],
+            'errors': 'Missing JSON body',
+            'results': None
+        })
+
     username = data.get('username')
     password = data.get('password')
 
     if not username or not password:
-        return flask.jsonify({'status': StatusCodes['api_error'], 'errors': 'Username and password are required', 'results': None})
+        return flask.jsonify({
+            'status': StatusCodes['api_error'],
+            'errors': 'Username and password are required',
+            'results': None
+        })
 
     conn = db_connection()
     if conn is None:
-        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Erro de conexão com a base de dados', 'results': None})
+        return flask.jsonify({
+            'status': StatusCodes['internal_error'],
+            'errors': 'Database connection error',
+            'results': None
+        })
 
     try:
         cur = conn.cursor()
-        cur.execute('SELECT id, password, user_type FROM person WHERE user_name = %s', (username,))  # Usar name
+        cur.execute("""
+            SELECT
+                p.id,
+                p.password,
+                CASE
+                    WHEN s.employee_person_id IS NOT NULL THEN 'staff'
+                    WHEN i.employee_person_id IS NOT NULL THEN 'instructor'
+                    WHEN st.person_id IS NOT NULL THEN 'student'
+                    ELSE 'unknown'
+                END AS role
+            FROM person p
+            LEFT JOIN staff s ON s.employee_person_id = p.id
+            LEFT JOIN instructor i ON i.employee_person_id = p.id
+            LEFT JOIN student st ON st.person_id = p.id
+            WHERE p.name = %s
+        """, (username,))
+
         result = cur.fetchone()
+        
+        if not result:
+            return flask.jsonify({
+                'status': StatusCodes['api_error'],
+                'errors': 'Invalid credentials',
+                'results': None
+        })
+    
+        user_id, stored_password, role = result
 
-        if not result or result[1] != password:
-            return flask.jsonify({'status': StatusCodes['api_error'], 'errors': 'Nome ou senha incorretos', 'results': None})
+        #use encrypted_blabla 
+        
+        if (password != stored_password):
+            return flask.jsonify({
+                'status': StatusCodes['api_error'],
+                'errors': 'Invalid credentials',
+                'results': None
+            })
 
-        user_id, _, user_type = result
-        resultAuthToken = jwt.encode({
+        token = jwt.encode({
             'user_id': user_id,
-            'name': username,  
-            'user_type': user_type,
+            'role': role,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         }, app.config['JWT_SECRET_KEY'], algorithm='HS256')
 
-        response = {'status': StatusCodes['success'], 'errors': None, 'results': resultAuthToken}
-        return flask.jsonify(response)
+        return flask.jsonify({
+            'status': StatusCodes['success'],
+            'errors': None,
+            'results': token
+        })
 
-    except (Exception, psycopg2.DatabaseError) as error:
-        logger.error(f'PUT /dbproj/user - erro: {error}')
-        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': str(error), 'results': None})
+    except (Exception, psycopg2.DatabaseError) as e:
+        return flask.jsonify({
+            'status': StatusCodes['internal_error'],
+            'errors': str(e),
+            'results': None
+        })
 
     finally:
-        if conn is not None:
-            conn.close()
+        conn.close()
 
 @app.route('/dbproj/register/student', methods=['POST'])
 @token_required
@@ -552,6 +615,7 @@ def delete_student(student_id):
             conn.close()
 
 if __name__ == '__main__':
+    
     # set up logging
     logging.basicConfig(filename='log_file.log')
     logger = logging.getLogger('logger')
