@@ -3,7 +3,6 @@
 ## ============== Bases de Dados ===============
 ## ============== LEI  2024/2025 ===============
 ## =============================================
-## =================== Demo ====================
 ## =============================================
 ## =============================================
 ## === Department of Informatics Engineering ===
@@ -11,9 +10,7 @@
 ## =============================================
 ##
 ## Authors:
-##   João R. Campos <jrcampos@dei.uc.pt>
-##   Nuno Antunes <nmsa@dei.uc.pt>
-##   University of Coimbra
+##   Fábio Fernandess - nº 2023230805 <fcfernandes2005@gmail.com>
 
 
 import flask
@@ -560,62 +557,59 @@ def enroll_activity(activity_id):
 @token_required
 @roles_required("student")
 def enroll_course_edition(course_edition_id):
-    user = flask.g.user  # token decodificado no @token_required
 
-    # Apenas estudantes podem se inscrever em edições de curso
-    if user.get('user_type') != 'student':
-        return flask.jsonify({
-            'status': StatusCodes['unauthorized'],
-            'errors': 'Only students can enroll in course editions',
-            'results': None
-        }), 401
-
+    student_id = flask.g.user["user_id"]
     data = flask.request.get_json()
+    
     classes = data.get('classes', [])
     date_str= data.get('date')
-    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-
-
-    if not classes:
+    
+    if not classes or not date_str:
         return flask.jsonify({
             'status': StatusCodes['api_error'],
-            'errors': 'At least one class ID is required',
+            'errors': 'Missing required fields!',
+            'results': None
+    }), 400
+    
+    
+    try:
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return flask.jsonify({
+            'status': StatusCodes['api_error'],
+            'errors': 'Invalid date format (YYYY-MM-DD)',
             'results': None
         })
 
-    student_id = user.get('user_id')
-    if not student_id:
-        return flask.jsonify({
-            'status': StatusCodes['api_error'],
-            'errors': 'Student ID not found in token',
-            'results': None
-        })
 
     conn = db_connection()
     if conn is None:
-        return flask.jsonify({
-            'status': StatusCodes['internal_error'],
-            'errors': 'Erro de conexão com o banco',
-            'results': None
-        })
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
+
 
     try:
         cur = conn.cursor()
     
-        cur.execute(
-            'INSERT INTO enrollment (enrollment_date_,status,student_financialaccount_person_id) VALUES (%s, %s, %s) RETURNING enrollment_id',(date,"ON", student_id))
-        enrollment_id = cur.fetchone()
+        cur.execute("""INSERT INTO enrollment (enrollment_date_,status,student_person_id)
+                    VALUES (%s, %s, %s) 
+                    RETURNING enrollment_id
+                    """,(date,"ON", student_id))
+        
+        enrollment_id = cur.fetchone()[0]
         
         cur.execute(
-            'INSERT INTO course_enrollment (grade,approved,courseedition_edition_id,enrollment_enrollment_id) VALUES (%s, %s, %s,%s)',(0,False,course_edition_id, enrollment_id))
+            'INSERT INTO course_enrollment (grade,approved,courseedition_edition_id,enrollment_enrollment_id) VALUES (%s, %s, %s,%s)',(None,False,course_edition_id, enrollment_id))
                 
         for class_id in classes:
             cur.execute(
-                'INSERT INTO class_enrollment (class_id) VALUES (%s)',
-                (class_id)
-            )
+                """
+                INSERT INTO class_enrollment (class_id)
+                VALUES (%s)
+                """,(class_id,))
+            
         conn.commit()
-        response = {'status': StatusCodes['success'], 'errors': None, 'results': None}
+        
+        response = {'status': StatusCodes['success'], 'errors': None, 'results': "Student enrolled in classes!"}
         return flask.jsonify(response)
     
     except (Exception, psycopg2.DatabaseError) as error:
@@ -626,9 +620,102 @@ def enroll_course_edition(course_edition_id):
             'errors': str(error),
             'results': None
         })
+        
     finally:
         if conn is not None:
             conn.close()
+
+@app.route('/dbproj/submit_grades/<course_edition_id>', methods=['POST'])
+@token_required
+@roles_required('instructor')
+def submite_grade(course_edition_id):
+    pass
+    
+@app.route('/dbproj/student_details/<person_id>', methods=['GET'])
+@token_required
+@roles_required('staff','student')
+def student_details(person_id):
+    
+    student_id = flask.g.user["user_id"]
+    
+    conn = db_connection()
+    if conn is None:
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
+
+    try:
+        cur = conn.cursor()
+        results = {}
+        
+        cur.execute("""
+            SELECT
+                ce.edition_id AS course_edition_id,
+                c.course_name,c.credits,cen.grade,ce.edition_year,ce.edition_semester
+            FROM enrollment e
+            JOIN course_enrollment cen
+                ON cen.enrollment_enrollment_id = e.enrollment_id
+            JOIN courseedition ce
+                ON ce.edition_id = cen.courseedition_edition_id
+            JOIN course c
+                ON c.course_id = ce.course_course_id
+            WHERE e.student_person_id = %s
+        """, (student_id,))
+
+        rows = cur.fetchall()
+
+        results = []
+        for r in rows:
+            results.append({
+                "course_edition_id": r[0],
+                "course_name": r[1],
+                "credits": r[2],
+                "grade": r[3],
+                "course_edition_year": r[4],
+                "course_edition_semester": r[5]
+            })
+
+        
+        response = {'status': StatusCodes['success'], 'errors': None, 'results': results}
+        return flask.jsonify(response)
+    
+    except (Exception, psycopg2.DatabaseError) as error:
+        conn.rollback()
+        logger.error(f'POST /dbproj/enroll_course_edition/{person_id} - erro: {error}')
+        return flask.jsonify({
+            'status': StatusCodes['internal_error'],
+            'errors': str(error),
+            'results': None
+        })
+        
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+@app.route('/dbproj/degree_details/<degree_id>', methods=['GET'])
+@token_required
+@roles_required('staff')
+def degree_details(degree_id):
+    pass
+    
+
+@app.route('/dbproj/top3', methods=['GET'])
+@token_required
+@roles_required('staff')
+def top3_students():
+    pass
+  
+
+@app.route('/dbproj/top_by_district', methods=['GET'])
+@token_required
+@roles_required('staff')
+def top_by_district():
+    pass
+
+@app.route('/dbproj/report', methods=['GET'])
+@token_required
+@roles_required('staff')
+def report():
+    pass
 
 
 @app.route('/dbproj/delete_details/<person_id>', methods=['DELETE'])
