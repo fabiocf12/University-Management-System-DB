@@ -25,11 +25,12 @@ from functools import wraps
 import hashlib
 from flask import request
 
-app = flask.Flask(__name__)
-app.config['JWT_SECRET_KEY'] = 'some_jwt_secret_key'
-
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
+
+app = flask.Flask(__name__)
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+
 
 StatusCodes = {
     'success': 200,
@@ -630,6 +631,7 @@ def enroll_course_edition(course_edition_id):
 @roles_required('instructor')
 def submite_grade(course_edition_id):
     pass
+
     
 @app.route('/dbproj/student_details/<person_id>', methods=['GET'])
 @token_required
@@ -679,7 +681,7 @@ def student_details(person_id):
     
     except (Exception, psycopg2.DatabaseError) as error:
         conn.rollback()
-        logger.error(f'POST /dbproj/enroll_course_edition/{person_id} - erro: {error}')
+        logger.error(f'POST /dbproj/student_details/{person_id} - erro: {error}')
         return flask.jsonify({
             'status': StatusCodes['internal_error'],
             'errors': str(error),
@@ -695,21 +697,158 @@ def student_details(person_id):
 @token_required
 @roles_required('staff')
 def degree_details(degree_id):
-    pass
     
+    conn = db_connection()
+    if conn is None:
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
+
+    try:
+        cur = conn.cursor()
+        results = {}
+        
+        cur.execute("""
+                SELECT 
+                    c.course_id, c.course_name,ce.edition_id            AS course_edition_id,
+                    ce.edition_year          AS course_edition_year,ce.capacity,
+                    COUNT(cen.enrollment_enrollment_id)                      AS enrolled_count,
+                    COUNT(cen.enrollment_enrollment_id)
+                        FILTER (WHERE cen.approved = TRUE)                   AS approved_count,
+                    ce.instructor_employee_person_id                         AS coordinator_id,
+                    ARRAY_AGG(DISTINCT i.employee_person_id)
+                        FILTER (WHERE i.employee_person_id IS NOT NULL)      AS instructors
+                FROM degree_course dc
+                JOIN course c
+                    ON c.course_id = dc.course_course_id
+                JOIN courseedition ce
+                    ON ce.course_course_id = c.course_id
+
+                LEFT JOIN course_enrollment cen
+                    ON cen.courseedition_edition_id = ce.edition_id
+
+                LEFT JOIN instructor i
+                    ON i.employee_person_id = ce.instructor_employee_person_id
+
+                WHERE   dc.degree_degree_id = %s
+
+                GROUP BY
+                    c.course_id,
+                    c.course_name,
+                    ce.edition_id,
+                    ce.edition_year,
+                    ce.capacity,
+                    ce.instructor_employee_person_id
+
+                ORDER BY ce.edition_year DESC;
+            """,(degree_id,))
+
+        rows = cur.fetchall()
+
+        results = []
+        for r in rows:
+            results.append({
+                "course_id": r[0],
+                "course_name": r[1],
+                "course_edition_id": r[2],
+                "course_edition_year": r[3],
+                "capacity": r[4],
+                "enrolled_count": r[5],
+                "approved_count": r[6],
+                "coordinator_id": r[7],
+                "instructors": r[8] or []
+            })
+
+        return flask.jsonify({
+            "status": StatusCodes["success"],
+            "errors": None,
+            "results": results
+        })
+    
+    except (Exception, psycopg2.DatabaseError) as error:
+        conn.rollback()
+        logger.error(f'POST /dbproj/degree_details/{degree_id} - erro: {error}')
+        return flask.jsonify({
+            'status': StatusCodes['internal_error'],
+            'errors': str(error),
+            'results': None
+        })
+        
+    finally:
+        if conn is not None:
+            conn.close()
+    
+
 
 @app.route('/dbproj/top3', methods=['GET'])
 @token_required
 @roles_required('staff')
 def top3_students():
-    pass
+    pass    
   
 
 @app.route('/dbproj/top_by_district', methods=['GET'])
 @token_required
 @roles_required('staff')
 def top_by_district():
-    pass
+    
+    conn = db_connection()
+    if conn is None:
+        return flask.jsonify({'status': StatusCodes['internal_error'], 'errors': 'Database connection error', 'results': None})
+
+    try:
+        cur = conn.cursor()
+        
+    
+        cur.execute("""
+                WITH student_avg AS (
+                    SELECT
+                        s.person_id AS student_id,
+                        s.district,
+                        AVG(ce.grade) AS average_grade
+                    FROM student s
+                    JOIN enrollment e
+                        ON e.student_person_id = s.person_id
+                    JOIN course_enrollment ce
+                        ON ce.enrollment_enrollment_id = e.enrollment_id
+                    GROUP BY s.person_id, s.district
+                )
+
+                SELECT DISTINCT ON (district)
+                    student_id,
+                    district,
+                    average_grade
+                FROM student_avg
+                ORDER BY district, average_grade DESC;
+                """)
+        
+        rows = cur.fetchall()
+        
+        results = [
+            {
+                "student_id": r[0],
+                "district": r[1],
+                "average_grade": float(r[2]) if r[2] is not None else None
+            }
+            for r in rows
+        ]
+          
+        return flask.jsonify({
+                "status": StatusCodes["success"],
+                "errors": None,
+                "results": results
+            })
+    
+    except (Exception, psycopg2.DatabaseError) as error:
+        conn.rollback()
+        logger.error(f'POST /dbproj/top_by_district - erro: {error}')
+        return flask.jsonify({
+            'status': StatusCodes['internal_error'],
+            'errors': str(error),
+            'results': None
+        })
+        
+    finally:
+        if conn is not None:
+            conn.close()
 
 @app.route('/dbproj/report', methods=['GET'])
 @token_required
