@@ -121,7 +121,7 @@ Note: Some tables were automatically generated from a modeling tool, resulting i
 
 [ ] Full consistency across all operations
 
-**🧪 Running the Project**
+## 🧪 Running the Project
 This is an API-only project — there is no frontend. All interactions are performed via HTTP requests, using tools such as:
 
 Postman
