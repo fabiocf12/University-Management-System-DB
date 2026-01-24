@@ -1,275 +1,144 @@
-# 🎓 Academic Management System API (Flask + PostgreSQL)
+# 🎓 Academic Management System API
 
-This repository contains a backend REST API developed in Python (Flask) with PostgreSQL, originally created for an academic database project and later partially refactored and improved to better reflect clean architecture, authentication, and authorization practices.
+**Flask · PostgreSQL · JWT**
 
-The project focuses mainly on:
+---
 
-Authentication using JWT
+## 📌 Overview
 
-Role-based access control
+This repository contains a backend REST API developed in **Python (Flask)** with **PostgreSQL**, originally created for an academic database project and later partially refactored and improved.
 
-Relational database interaction with SQL
+The refactor focuses on improving architecture, authentication, and authorization, rather than completing all planned features.
 
-Clear separation of concerns in the backend
+> [!CAUTION]
+> ### ⚠️ Important
+> This project is not fully implemented. Some endpoints and database interactions were intentionally left unfinished.
+> The goal of this revision was to strengthen core backend concepts, not feature completeness or production readiness.
 
-⚠️ Note: This project is not fully implemented. Some endpoints and database interactions were intentionally left unfinished, as the main goal of this revision was to improve core backend concepts rather than feature completeness.
+---
 
-🧠 Project Context
+## 🎯 Main Focus
 
-This project was initially developed as part of a university course on Databases and Distributed Systems.
+* 🔐 **Authentication** using JWT
+* 🧭 **Role-based access control**
+* 🗄️ **Relational database interaction** using SQL
+* 🧱 **Clear separation of concerns** in the backend
 
-Some time after the original submission, the project was revisited voluntarily in order to:
+---
 
-Improve authentication and authorization logic
+## 🧠 Project Context
 
-Refactor poorly designed parts of the original solution
+This project was initially developed as part of a university course on **Databases and Distributed Systems**.
 
-Apply better backend and security practices learned over time
+Some time after the original submission, it was voluntarily revisited in order to:
+* Improve authentication and authorization logic
+* Refactor poorly designed parts of the original solution
+* Apply better backend and security practices learned over time
 
-As such, this repository represents a learning-focused refactor, not a production-ready system.
+*As such, this repository represents a learning-focused refactor, not a production-ready system.*
 
-🛠️ Tech Stack
+---
 
-Python 3
+## 🛠️ Tech Stack
 
-Flask
+| Technology | Role |
+| :--- | :--- |
+| **Python 3** | Core Language |
+| **Flask** | Web Framework |
+| **PostgreSQL** | Relational Database |
+| **psycopg2** | Database Adapter |
+| **JWT** | Authentication & Security |
 
-PostgreSQL
+---
 
-psycopg2
+## 🔐 Authentication & Authorization
 
-JWT (JSON Web Tokens)
+### 🔑 Login
+Users authenticate using JWT.
 
-🔐 Authentication & Authorization
-Login
+**Endpoint:** `PUT /dbproj/user`
 
-Users authenticate via JWT:
-
-PUT /dbproj/user
-
-
-Request body
-
+**Request Body:**
+json
 {
   "username": "user_name",
   "password": "password"
 }
 
-
-Response
-
+**Response:**
+json
 {
   "status": 200,
   "errors": null,
   "results": "<jwt_token>"
 }
+[!NOTE] The returned token must be included in subsequent requests.
 
+**🪪 JWT Usage**
+The token must be sent in the Authorization header: Authorization: Bearer <jwt_token>
 
-The returned token must be included in subsequent requests.
-
-JWT Usage
-
-The token can be sent using the Authorization header:
-
-Authorization: Bearer <jwt_token>
-
-
-JWT payload includes:
+JWT Payload:
 
 user_id
-
 role (staff | student | instructor)
+exp (expiration time)
 
-expiration time (exp)
-
-Role-Based Access Control
+## 🧩 Role-Based Access Control
 
 Authorization is enforced using Flask decorators, such as:
 
-token_required
+@token_required
 
-role_required(...)
+@role_required(...)
 
-These decorators:
+These decorators validate the JWT, decode and store user information in flask.g.user, and restrict endpoint access based on user role. This approach avoids code duplication and keeps route handlers clean.
 
-Validate the JWT
-
-Decode and store user information in flask.g.user
-
-Restrict endpoint access based on user role
-
-This approach avoids code duplication and keeps endpoints clean.
-
-🗄️ Database Design
-
+**🗄️ Database Design** 
 The database follows a relational model with entities such as:
 
-person
-
-staff
-
-student_financialaccount
-
-instructor
+person, staff, student_financialaccount, instructor
 
 degree, course, courseedition
 
-enrollment and association tables
+Enrollment and association tables
 
-Some tables were automatically generated from a modeling tool, resulting in:
-
-Long table names
-
-Association tables for many-to-many relationships
-
-While not ideal, the schema was kept mostly intact to remain aligned with the original academic requirements.
+Note: Some tables were automatically generated from a modeling tool, resulting in long table names and multiple association tables for many-to-many relationships. While not ideal, the schema was kept mostly intact to remain aligned with the original academic requirements.
 
 📌 Implemented / Partially Implemented Features
+✅ Implemented
+[x] JWT authentication
 
-✔️ JWT authentication
-✔️ Role detection based on relational tables
-✔️ Secure access control with decorators
-✔️ Database connection handling
-✔️ Some registration and enrollment endpoints
+[x] Role detection based on relational tables
 
-❌ Full endpoint coverage
-❌ Complete data seeding
-❌ Full consistency across all operations
+[x] Secure access control with decorators
 
-🎓 Academic Management System API (Flask + PostgreSQL)
+[x] Database connection handling
 
-This repository contains a backend REST API developed in Python (Flask) with PostgreSQL, originally created for an academic database project and later partially refactored and improved to better reflect clean architecture, authentication, and authorization practices.
+[x] Some registration and enrollment endpoints
 
-The project focuses mainly on:
+❌ Not Fully Implemented
+[ ] Full endpoint coverage
 
-Authentication using JWT
+[ ] Complete data seeding
 
-Role-based access control
+[ ] Full consistency across all operations
 
-Relational database interaction with SQL
+**🧪 Running the Project**
+This is an API-only project — there is no frontend. All interactions are performed via HTTP requests, using tools such as:
 
-Clear separation of concerns in the backend
+Postman
 
-⚠️ Note: This project is not fully implemented. Some endpoints and database interactions were intentionally left unfinished, as the main goal of this revision was to improve core backend concepts rather than feature completeness.
+curl
 
-🧠 Project Context
+Insomnia
 
-This project was initially developed as part of a university course on Databases and Distributed Systems.
+Basic Steps
+Create a PostgreSQL database.
 
-Some time after the original submission, the project was revisited voluntarily in order to:
+Apply the provided SQL schema.
 
-Improve authentication and authorization logic
+Configure database credentials and JWT secret.
 
-Refactor poorly designed parts of the original solution
+Run the Flask application.
 
-Apply better backend and security practices learned over time
-
-As such, this repository represents a learning-focused refactor, not a production-ready system.
-
-🛠️ Tech Stack
-
-Python 3
-
-Flask
-
-PostgreSQL
-
-psycopg2
-
-JWT (JSON Web Tokens)
-
-🔐 Authentication & Authorization
-Login
-
-Users authenticate via JWT:
-
-PUT /dbproj/user
-
-
-Request body
-
-{
-  "username": "user_name",
-  "password": "password"
-}
-
-
-Response
-
-{
-  "status": 200,
-  "errors": null,
-  "results": "<jwt_token>"
-}
-
-
-The returned token must be included in subsequent requests.
-
-JWT Usage
-
-The token can be sent using the Authorization header:
-
-Authorization: Bearer <jwt_token>
-
-
-JWT payload includes:
-
-user_id
-
-role (staff | student | instructor)
-
-expiration time (exp)
-
-Role-Based Access Control
-
-Authorization is enforced using Flask decorators, such as:
-
-token_required
-
-role_required(...)
-
-These decorators:
-
-Validate the JWT
-
-Decode and store user information in flask.g.user
-
-Restrict endpoint access based on user role
-
-This approach avoids code duplication and keeps endpoints clean.
-
-🗄️ Database Design
-
-The database follows a relational model with entities such as:
-
-person
-
-staff
-
-student_financialaccount
-
-instructor
-
-degree, course, courseedition
-
-enrollment and association tables
-
-Some tables were automatically generated from a modeling tool, resulting in:
-
-Long table names
-
-Association tables for many-to-many relationships
-
-While not ideal, the schema was kept mostly intact to remain aligned with the original academic requirements.
-
-📌 Implemented / Partially Implemented Features
-
-✔️ JWT authentication
-✔️ Role detection based on relational tables
-✔️ Secure access control with decorators
-✔️ Database connection handling
-✔️ Some registration and enrollment endpoints
-
-❌ Full endpoint coverage
-❌ Complete data seeding
-❌ Full consistency across all operations
+Interact with the API using an API client.
