@@ -74,14 +74,14 @@ json
 }
 [!NOTE] The returned token must be included in subsequent requests.
 
-**🪪 JWT Usage**
+**🪪 JWT Usage:**
 The token must be sent in the Authorization header: Authorization: Bearer <jwt_token>
 
 JWT Payload:
 
-user_id
-role (staff | student | instructor)
-exp (expiration time)
+* user_id
+* role (staff | student | instructor)
+* exp (expiration time)
 
 ## 🧩 Role-Based Access Control
 
@@ -93,14 +93,12 @@ Authorization is enforced using Flask decorators, such as:
 
 These decorators validate the JWT, decode and store user information in flask.g.user, and restrict endpoint access based on user role. This approach avoids code duplication and keeps route handlers clean.
 
-**🗄️ Database Design** 
+## 🗄️ Database Design 
 The database follows a relational model with entities such as:
 
-person, staff, student_financialaccount, instructor
-
-degree, course, courseedition
-
-Enrollment and association tables
+* person, staff, student_financialaccount, instructor
+* degree, course, courseedition
+* Enrollment and association tables
 
 Note: Some tables were automatically generated from a modeling tool, resulting in long table names and multiple association tables for many-to-many relationships. While not ideal, the schema was kept mostly intact to remain aligned with the original academic requirements.
 
