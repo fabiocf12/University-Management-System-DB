@@ -777,7 +777,6 @@ def degree_details(degree_id):
             conn.close()
     
 
-
 @app.route('/dbproj/top3', methods=['GET'])
 @token_required
 @roles_required('staff')

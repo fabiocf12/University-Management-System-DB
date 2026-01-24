@@ -1,0 +1,526 @@
+{
+	"info": {
+		"_postman_id": "7e42561a-7ab9-4be0-bcff-5eb18dec97af",
+		"name": "University API Stubs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43683252",
+		"_collection_link": "https://dark-firefly-5676860.postman.co/workspace/F%C3%A1bio-Fernandes's-Workspace~9cc0323b-89e0-4f9f-8cd7-a139915a528d/collection/43683252-7e42561a-7ab9-4be0-bcff-5eb18dec97af?action=share&source=collection_link&creator=43683252"
+	},
+	"item": [
+		{
+			"name": "Login User",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"artur\",\"password\":\"leo124\"}"
+				},
+				"url": {
+					"raw": "localhost:8080/dbproj/user",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register Student",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0LCJuYW1lIjoicm9kcmlvZyIsInVzZXJfdHlwZSI6Imluc3RydWN0b3IiLCJleHAiOjE3NDgyODY0MzF9.nl0mHKG-GKY2dqXXptrgj8FoBbrerC7anvFge7fcVgY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"fab\", \"email\": \"fab.com\", \"password\": \"fab151\",\"date_of_birth\": \"2005-01-12\",\"district\":\"Faro\"}"
+				},
+				"url": {
+					"raw": "localhost:8080/dbproj/register/student",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"register",
+						"student"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register Staff",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJuYW1lIjoiQWRtaW4gU3RhZmYiLCJ1c2VyX3R5cGUiOiJzdGFmZiIsImV4cCI6MTc0ODI4NTcxMn0.vODhYajwAd-WKgCYTKX0N4LYwe_9Yx-S0uaI9TYf39E",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"mario\", \"email\": \"mario@example.com\", \"password\": \"pass123\",\"hire_date\": \"2025-04-03\",\"salary\" : 3000 ,\"status\" : \"Active\",\"roll\" : \"admin\" ,\"date_of_birth\" : \"1978-03-09\"}"
+				},
+				"url": {
+					"raw": "localhost:8080/dbproj/register/staff",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"register",
+						"staff"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register Instructor",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJuYW1lIjoiQWRtaW4gU3RhZmYiLCJ1c2VyX3R5cGUiOiJzdGFmZiIsImV4cCI6MTc0ODI4MjYzOH0.2Up2GjGq9_8LXgO752JT_kFQl_oJEyEh6nxFLyUGdrU",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"raul\", \"email\": \"raul@example.com\", \"password\": \"pass123\",\"hire_date\": \"2025-04-03\",\"salary\" : 3000 ,\"status\" : \"Active\",\"date_of_birth\" : \"1978-03-09\"}"
+				},
+				"url": {
+					"raw": "localhost:8080/dbproj/register/instructor",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"register",
+						"instructor"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Enroll Degree",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJuYW1lIjoiQWRtaW4gU3RhZmYiLCJ1c2VyX3R5cGUiOiJzdGFmZiIsImV4cCI6MTc0ODI4NzAyMn0.mkCTJ63OXLU0phSDEsbyzo21vNhP0jIMiHesBAOhndE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"student_id\": \"5\", \"date\": \"2024-02-23\"}"
+				},
+				"url": {
+					"raw": "localhost:8080/dbproj/enroll_degree/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"enroll_degree",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Enroll Activity",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"student_id\": \"2\", \"date\": \"2024-02-23\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/dbproj/enroll_activity/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"enroll_activity",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Enroll Course Edition",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"classes\": [101, 102], \"date\" : \"2024-05-04\"}"
+				},
+				"url": {
+					"raw": "localhost:8080/dbproj/enroll_course_edition/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"enroll_course_edition",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Submit Grades",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"period\": \"Spring 2024\", \"grades\": [[\"1001\", 15], [\"1002\", 18]]}"
+				},
+				"url": {
+					"raw": "localhost:8080/dbproj/submit_grades/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"submit_grades",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Student Details",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/dbproj/student_details/1001",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"student_details",
+						"1001"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Degree Details",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/dbproj/degree_details/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"degree_details",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Top 3 Students",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/dbproj/top3",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"top3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Top by District",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/dbproj/top_by_district",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"top_by_district"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Monthly Report",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/dbproj/report",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"report"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Student",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiYXJ0dXIiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzQ4MjkyMzMyfQ.ucMTjUf7eSC46IThFnLEiPGjNpaiYsgz_qcU3jFArEo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/dbproj/delete_details/1001",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dbproj",
+						"delete_details",
+						"1001"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "Sample token, should be random!",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
