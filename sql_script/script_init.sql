@@ -1,241 +1,327 @@
-CREATE TABLE student (
-	student_id SERIAL NOT NULL,
-	district	 VARCHAR(100) NOT NULL,
-	person_id	 INTEGER,
-	PRIMARY KEY(person_id)
-);
 
-CREATE TABLE instructor (
-	employee_person_id INTEGER,
-	PRIMARY KEY(employee_person_id)
+
+
+DROP TABLE IF EXISTS person, student, employee, staff, instructor, degree, course, course_prerequisite, degree_course, course_edition, classroom, class, attendance, extra_activity, degree_enrollment, course_enrollment, class_enrollment, activity_enrollment CASCADE;
+
+CREATE TABLE person (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    date_of_birth DATE NOT NULL,
+    password VARCHAR(512) NOT NULL
 );
 
 CREATE TABLE degree (
-	degree_id	 SERIAL,
-	degree_name	 VARCHAR(100) NOT NULL,
-	credits	 INTEGER NOT NULL,
-	months_duration INTEGER NOT NULL,
-	tuition	 FLOAT(8) NOT NULL,
-	PRIMARY KEY(degree_id)
+    degree_id SERIAL PRIMARY KEY,
+    degree_name VARCHAR(100) NOT NULL,
+    credits INTEGER NOT NULL,
+    months_duration INTEGER NOT NULL,
+    tuition FLOAT NOT NULL
 );
 
 CREATE TABLE course (
-	course_id	 SERIAL,
-	course_name VARCHAR(512) NOT NULL,
-	credits	 INTEGER NOT NULL,
-	PRIMARY KEY(course_id)
-);
-
-CREATE TABLE courseedition (
-	edition_id			 SERIAL,
-	edition_year			 INTEGER NOT NULL,
-	capacity			 INTEGER NOT NULL,
-	edition_semester		 INTEGER NOT NULL,
-	instructor_employee_person_id INTEGER NOT NULL,
-	course_course_id		 INTEGER NOT NULL,
-	PRIMARY KEY(edition_id)
+    course_id SERIAL PRIMARY KEY,
+    course_name VARCHAR(512) NOT NULL,
+    credits INTEGER NOT NULL
 );
 
 CREATE TABLE classroom (
-	classroom_id	 SERIAL,
-	campus_building VARCHAR(100) NOT NULL,
-	room_number	 INTEGER NOT NULL,
-	capacity	 INTEGER NOT NULL,
-	PRIMARY KEY(classroom_id)
+    classroom_id SERIAL PRIMARY KEY,
+    campus_building VARCHAR(100) NOT NULL,
+    room_number INTEGER UNIQUE NOT NULL,
+    capacity INTEGER NOT NULL
 );
 
-CREATE TABLE financialaccount (
-	tuition_charges	 FLOAT(8) NOT NULL,
-	fees_charges	 FLOAT(8) NOT NULL,
-	other_charges	 FLOAT(8) NOT NULL,
-	student_person_id INTEGER,
-	PRIMARY KEY(student_person_id)
+CREATE TABLE extra_activity (
+    activity_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(100) NOT NULL,
+    fee FLOAT NOT NULL,
+    months_duration INTEGER NOT NULL
 );
 
-CREATE TABLE extraactivity (
-	activity_id	 SERIAL,
-	name		 VARCHAR(100) NOT NULL,
-	fee		 FLOAT(8) NOT NULL,
-	description	 VARCHAR(100) NOT NULL,
-	months_duration INTEGER NOT NULL,
-	PRIMARY KEY(activity_id)
-);
 
-CREATE TABLE person (
-	id		 SERIAL,
-	name		 VARCHAR(100) NOT NULL,
-	password   VARCHAR(512) NOT NULL,
-	email	 VARCHAR(100) NOT NULL,
-	date_of_birth DATE NOT NULL,
-	PRIMARY KEY(id)
-);
-
-CREATE TABLE staff (
-	roll		 VARCHAR(100) NOT NULL,
-	employee_person_id INTEGER,
-	PRIMARY KEY(employee_person_id)
-);
-
-CREATE TABLE class (
-	id			 SERIAL NOT NULL,
-	type			 VARCHAR(100) NOT NULL,
-	start_schedule		 TIMESTAMP NOT NULL,
-	subject			 VARCHAR(100) NOT NULL,
-	courseedition_edition_id INTEGER NOT NULL,
-	classroom_classroom_id	 INTEGER NOT NULL,
-	PRIMARY KEY(id)
-);
-
-CREATE TABLE attendance (
-	attendance_id	 SERIAL,
-	present		 BOOL NOT NULL,
-	class_id		 INTEGER NOT NULL,
-	student_person_id INTEGER NOT NULL,
-	PRIMARY KEY(attendance_id)
-);
-
-CREATE TABLE enrollment (
-	enrollment_id	 SERIAL,
-	enrollment_date_	 DATE NOT NULL,
-	status		 BOOL NOT NULL,
-	student_person_id INTEGER NOT NULL,
-	PRIMARY KEY(enrollment_id)
-);
-
-CREATE TABLE course_enrollment (
-	grade			 FLOAT(8) NOT NULL,
-	approved		 BOOL NOT NULL,
-	courseedition_edition_id INTEGER NOT NULL,
-	enrollment_enrollment_id INTEGER,
-	PRIMARY KEY(enrollment_enrollment_id)
-);
-
-CREATE TABLE degree_enrollment (
-	average_grade		 FLOAT(8) NOT NULL,
-	approved_courses_count	 INTEGER NOT NULL,
-	degree_degree_id	 INTEGER NOT NULL,
-	enrollment_enrollment_id INTEGER,
-	PRIMARY KEY(enrollment_enrollment_id)
-);
-
-CREATE TABLE extraactivity_enrollment (
-	extraactivity_activity_id INTEGER NOT NULL,
-	enrollment_enrollment_id	 INTEGER,
-	PRIMARY KEY(enrollment_enrollment_id)
+CREATE TABLE student (
+    person_id INTEGER PRIMARY KEY REFERENCES person(id),
+    district VARCHAR(100) NOT NULL,
+    tuition_charges FLOAT NOT NULL DEFAULT 0,
+    fees_charges FLOAT NOT NULL DEFAULT 0,
+    other_charges FLOAT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE employee (
-	employee_id SERIAL NOT NULL,
-	hire_date	 DATE NOT NULL,
-	salary	 FLOAT(8) NOT NULL,
-	status	 VARCHAR(100) NOT NULL,
-	person_id	 INTEGER,
-	PRIMARY KEY(person_id)
+    person_id INTEGER PRIMARY KEY REFERENCES person(id),
+    hire_date DATE NOT NULL,
+    salary FLOAT NOT NULL,
+    status VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE class_enrollment (
-	class_enrollment_id_ SERIAL,
-	class_id		 INTEGER NOT NULL,
-	PRIMARY KEY(class_enrollment_id_)
+CREATE TABLE staff (
+    person_id INTEGER PRIMARY KEY REFERENCES employee(person_id),
+    roll VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE course_enrollment_class_enrollment (
-	course_enrollment_enrollment_enrollment_id INTEGER,
-	class_enrollment_class_enrollment_id_	 INTEGER,
-	PRIMARY KEY(course_enrollment_enrollment_enrollment_id,class_enrollment_class_enrollment_id_)
+CREATE TABLE instructor (
+    person_id INTEGER PRIMARY KEY REFERENCES employee(person_id)
 );
 
-CREATE TABLE student_courseedition (
-	student_person_id	 INTEGER,
-	courseedition_edition_id INTEGER,
-	PRIMARY KEY(student_person_id,courseedition_edition_id)
-);
 
-CREATE TABLE student_class (
-	student_person_id INTEGER,
-	class_id		 INTEGER,
-	PRIMARY KEY(student_person_id,class_id)
-);
-
-CREATE TABLE extraactivity_student (
-	extraactivity_activity_id INTEGER,
-	student_person_id	 INTEGER,
-	PRIMARY KEY(extraactivity_activity_id,student_person_id)
-);
-
-CREATE TABLE student_degree (
-	student_person_id INTEGER,
-	degree_degree_id	 INTEGER,
-	PRIMARY KEY(student_person_id,degree_degree_id)
+CREATE TABLE course_prerequisite (
+    course_id INTEGER REFERENCES course(course_id),
+    prerequisite_id INTEGER REFERENCES course(course_id),
+    PRIMARY KEY (course_id, prerequisite_id)
 );
 
 CREATE TABLE degree_course (
-	degree_degree_id INTEGER,
-	course_course_id INTEGER,
-	PRIMARY KEY(degree_degree_id,course_course_id)
+    degree_id INTEGER REFERENCES degree(degree_id),
+    course_id INTEGER REFERENCES course(course_id),
+    PRIMARY KEY (degree_id, course_id)
 );
 
-CREATE TABLE courseedition_instructor (
-	courseedition_edition_id	 INTEGER,
-	instructor_employee_person_id INTEGER,
-	PRIMARY KEY(courseedition_edition_id,instructor_employee_person_id)
+CREATE TABLE course_edition (
+    edition_id SERIAL PRIMARY KEY,
+    edition_year INTEGER NOT NULL,
+    edition_semester INTEGER NOT NULL,
+    capacity INTEGER NOT NULL,
+    evaluation_period VARCHAR(100) NOT NULL,
+    course_id INTEGER NOT NULL REFERENCES course(course_id),
+    coordinator_id INTEGER NOT NULL REFERENCES instructor(person_id)
 );
 
-CREATE TABLE course_course (
-	course_course_id	 INTEGER,
-	course_course_id1 INTEGER,
-	PRIMARY KEY(course_course_id,course_course_id1)
+CREATE TABLE class (
+    class_id SERIAL PRIMARY KEY,
+    type VARCHAR(100) NOT NULL,
+    start_schedule TIMESTAMP NOT NULL,
+    subject VARCHAR(100) NOT NULL,
+    edition_id INTEGER NOT NULL REFERENCES course_edition(edition_id),
+    classroom_id INTEGER NOT NULL REFERENCES classroom(classroom_id)
 );
 
-ALTER TABLE student ADD UNIQUE (student_id);
-ALTER TABLE student ADD CONSTRAINT student_fk1 FOREIGN KEY (person_id) REFERENCES person(id);
-ALTER TABLE instructor ADD CONSTRAINT instructor_fk1 FOREIGN KEY (employee_person_id) REFERENCES employee(person_id);
-ALTER TABLE courseedition ADD CONSTRAINT courseedition_fk1 FOREIGN KEY (instructor_employee_person_id) REFERENCES instructor(employee_person_id);
-ALTER TABLE courseedition ADD CONSTRAINT courseedition_fk2 FOREIGN KEY (course_course_id) REFERENCES course(course_id);
-ALTER TABLE classroom ADD UNIQUE (room_number);
-ALTER TABLE financialaccount ADD CONSTRAINT financialaccount_fk1 FOREIGN KEY (student_person_id) REFERENCES student(person_id);
-ALTER TABLE person ADD UNIQUE (email);
-ALTER TABLE staff ADD CONSTRAINT staff_fk1 FOREIGN KEY (employee_person_id) REFERENCES employee(person_id);
-ALTER TABLE class ADD CONSTRAINT class_fk1 FOREIGN KEY (courseedition_edition_id) REFERENCES courseedition(edition_id);
-ALTER TABLE class ADD CONSTRAINT class_fk2 FOREIGN KEY (classroom_classroom_id) REFERENCES classroom(classroom_id);
-ALTER TABLE attendance ADD CONSTRAINT attendance_fk1 FOREIGN KEY (class_id) REFERENCES class(id);
-ALTER TABLE attendance ADD CONSTRAINT attendance_fk2 FOREIGN KEY (student_person_id) REFERENCES student(person_id);
-ALTER TABLE enrollment ADD CONSTRAINT enrollment_fk1 FOREIGN KEY (student_person_id) REFERENCES student(person_id);
-ALTER TABLE course_enrollment ADD CONSTRAINT course_enrollment_fk1 FOREIGN KEY (courseedition_edition_id) REFERENCES courseedition(edition_id);
-ALTER TABLE course_enrollment ADD CONSTRAINT course_enrollment_fk2 FOREIGN KEY (enrollment_enrollment_id) REFERENCES enrollment(enrollment_id);
-ALTER TABLE degree_enrollment ADD CONSTRAINT degree_enrollment_fk1 FOREIGN KEY (degree_degree_id) REFERENCES degree(degree_id);
-ALTER TABLE degree_enrollment ADD CONSTRAINT degree_enrollment_fk2 FOREIGN KEY (enrollment_enrollment_id) REFERENCES enrollment(enrollment_id);
-ALTER TABLE extraactivity_enrollment ADD CONSTRAINT extraactivity_enrollment_fk1 FOREIGN KEY (extraactivity_activity_id) REFERENCES extraactivity(activity_id);
-ALTER TABLE extraactivity_enrollment ADD CONSTRAINT extraactivity_enrollment_fk2 FOREIGN KEY (enrollment_enrollment_id) REFERENCES enrollment(enrollment_id);
-ALTER TABLE employee ADD UNIQUE (employee_id);
-ALTER TABLE employee ADD CONSTRAINT employee_fk1 FOREIGN KEY (person_id) REFERENCES person(id);
-ALTER TABLE class_enrollment ADD CONSTRAINT class_enrollment_fk1 FOREIGN KEY (class_id) REFERENCES class(id);
-ALTER TABLE course_enrollment_class_enrollment ADD CONSTRAINT course_enrollment_class_enrollment_fk1 FOREIGN KEY (course_enrollment_enrollment_enrollment_id) REFERENCES course_enrollment(enrollment_enrollment_id);
-ALTER TABLE course_enrollment_class_enrollment ADD CONSTRAINT course_enrollment_class_enrollment_fk2 FOREIGN KEY (class_enrollment_class_enrollment_id_) REFERENCES class_enrollment(class_enrollment_id_);
-ALTER TABLE student_courseedition ADD CONSTRAINT student_courseedition_fk1 FOREIGN KEY (student_person_id) REFERENCES student(person_id);
-ALTER TABLE student_courseedition ADD CONSTRAINT student_courseedition_fk2 FOREIGN KEY (courseedition_edition_id) REFERENCES courseedition(edition_id);
-ALTER TABLE student_class ADD CONSTRAINT student_class_fk1 FOREIGN KEY (student_person_id) REFERENCES student(person_id);
-ALTER TABLE student_class ADD CONSTRAINT student_class_fk2 FOREIGN KEY (class_id) REFERENCES class(id);
-ALTER TABLE extraactivity_student ADD CONSTRAINT extraactivity_student_fk1 FOREIGN KEY (extraactivity_activity_id) REFERENCES extraactivity(activity_id);
-ALTER TABLE extraactivity_student ADD CONSTRAINT extraactivity_student_fk2 FOREIGN KEY (student_person_id) REFERENCES student(person_id);
-ALTER TABLE student_degree ADD CONSTRAINT student_degree_fk1 FOREIGN KEY (student_person_id) REFERENCES student(person_id);
-ALTER TABLE student_degree ADD CONSTRAINT student_degree_fk2 FOREIGN KEY (degree_degree_id) REFERENCES degree(degree_id);
-ALTER TABLE degree_course ADD CONSTRAINT degree_course_fk1 FOREIGN KEY (degree_degree_id) REFERENCES degree(degree_id);
-ALTER TABLE degree_course ADD CONSTRAINT degree_course_fk2 FOREIGN KEY (course_course_id) REFERENCES course(course_id);
-ALTER TABLE courseedition_instructor ADD CONSTRAINT courseedition_instructor_fk1 FOREIGN KEY (courseedition_edition_id) REFERENCES courseedition(edition_id);
-ALTER TABLE courseedition_instructor ADD CONSTRAINT courseedition_instructor_fk2 FOREIGN KEY (instructor_employee_person_id) REFERENCES instructor(employee_person_id);
-ALTER TABLE course_course ADD CONSTRAINT course_course_fk1 FOREIGN KEY (course_course_id) REFERENCES course(course_id);
-ALTER TABLE course_course ADD CONSTRAINT course_course_fk2 FOREIGN KEY (course_course_id1) REFERENCES course(course_id);
+
+CREATE TABLE degree_enrollment (
+    enrollment_id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES student(person_id),
+    degree_id INTEGER NOT NULL REFERENCES degree(degree_id),
+    enrollment_date DATE NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'Active'
+);
+
+CREATE TABLE course_enrollment (
+    enrollment_id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES student(person_id),
+    edition_id INTEGER NOT NULL REFERENCES course_edition(edition_id),
+    enrollment_date DATE NOT NULL,
+    grade FLOAT,
+    approved BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE class_enrollment (
+    enrollment_id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES student(person_id),
+    class_id INTEGER NOT NULL REFERENCES class(class_id)
+);
+
+CREATE TABLE activity_enrollment (
+    enrollment_id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES student(person_id),
+    activity_id INTEGER NOT NULL REFERENCES extra_activity(activity_id),
+    enrollment_date DATE NOT NULL
+);
+
+CREATE TABLE attendance (
+    attendance_id SERIAL PRIMARY KEY,
+    present BOOLEAN NOT NULL DEFAULT FALSE,
+    student_id INTEGER NOT NULL REFERENCES student(person_id),
+    class_id INTEGER NOT NULL REFERENCES class(class_id)
+);
 
 
--- ADMIN DEFAULT USER
-INSERT INTO person (id, name,password, email, date_of_birth)
-VALUES (1,'admin','1234','admin@uni.pt',CURRENT_DATE);
 
-INSERT INTO employee (hire_date, salary, status, person_id)
-VALUES (CURRENT_DATE,2000,'active',1);
+CREATE OR REPLACE FUNCTION update_tuition_charges()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_tuition FLOAT;
+BEGIN
+    -- New insertion
+    IF TG_OP = 'INSERT' THEN
+        SELECT tuition INTO v_tuition FROM degree WHERE degree_id = NEW.degree_id;
+        UPDATE student 
+        SET tuition_charges = tuition_charges + v_tuition 
+        WHERE person_id = NEW.student_id;
+        RETURN NEW;
+        
+    -- If deleting
+    ELSIF TG_OP = 'DELETE' THEN
+        SELECT tuition INTO v_tuition FROM degree WHERE degree_id = OLD.degree_id;
+        UPDATE student 
+        SET tuition_charges = tuition_charges - v_tuition 
+        WHERE person_id = OLD.student_id;
+        RETURN OLD;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
 
-INSERT INTO staff (roll, employee_person_id)
-VALUES ('administrator', 1);
+CREATE TRIGGER trg_degree_enrollment_finance
+AFTER INSERT OR DELETE ON degree_enrollment
+FOR EACH ROW EXECUTE FUNCTION update_tuition_charges();
 
-SELECT setval('person_id_seq', (SELECT MAX(id) FROM person));
+
+
+
+CREATE OR REPLACE FUNCTION update_fee_charges()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_fee FLOAT;
+BEGIN
+    -- New insertion
+    IF TG_OP = 'INSERT' THEN
+        SELECT fee INTO v_fee FROM extra_activity WHERE activity_id = NEW.activity_id;
+        UPDATE student 
+        SET fees_charges = fees_charges + v_fee 
+        WHERE person_id = NEW.student_id;
+        RETURN NEW;
+        
+    -- If deleting
+    ELSIF TG_OP = 'DELETE' THEN
+        SELECT fee INTO v_fee FROM extra_activity WHERE activity_id = OLD.activity_id;
+        UPDATE student 
+        SET fees_charges = fees_charges - v_fee 
+        WHERE person_id = OLD.student_id;
+        RETURN OLD;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_extra_activity_enrollment_finance
+AFTER INSERT OR DELETE ON activity_enrollment
+FOR EACH ROW EXECUTE FUNCTION update_fee_charges();
+
+
+CREATE OR REPLACE PROCEDURE enroll_student_course_edition(
+    p_student_id INT,
+    p_edition_id INT,
+    p_classes INT[],
+    p_date DATE
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_course_id INT;
+    v_capacity INT;
+    v_enrolled_count INT;
+    v_missing_prereq INT;
+    v_valid_degree BOOLEAN;
+    v_class_id INT;
+BEGIN
+    -- 1. Get course_id and capacity of this edition
+    SELECT course_id, capacity INTO v_course_id, v_capacity
+    FROM course_edition
+    WHERE edition_id = p_edition_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Course edition not found.';
+    END IF;
+
+    -- 2.  Check if the course belongs to the student's degree
+    SELECT EXISTS (
+        SELECT 1 FROM degree_enrollment de
+        JOIN degree_course dc ON de.degree_id = dc.degree_id
+        WHERE de.student_id = p_student_id AND dc.course_id = v_course_id AND de.status = 'Active'
+    ) INTO v_valid_degree;
+
+    IF NOT v_valid_degree THEN
+        RAISE EXCEPTION 'Student is not enrolled in a degree that includes this course.';
+    END IF;
+
+    -- 3. Check prerequisites
+    SELECT cp.prerequisite_id INTO v_missing_prereq
+    FROM course_prerequisite cp
+    LEFT JOIN (
+        SELECT ce_inner.course_id 
+        FROM course_enrollment c_enr
+        JOIN course_edition ce_inner ON c_enr.edition_id = ce_inner.edition_id
+        WHERE c_enr.student_id = p_student_id AND c_enr.approved = TRUE
+    ) passed_courses ON cp.prerequisite_id = passed_courses.course_id
+    WHERE cp.course_id = v_course_id AND passed_courses.course_id IS NULL
+    LIMIT 1;
+
+    IF v_missing_prereq IS NOT NULL THEN
+        RAISE EXCEPTION 'Student has not passed all prerequisites.';
+    END IF;
+
+    -- 4. Check capacity
+    SELECT COUNT(*) INTO v_enrolled_count
+    FROM course_enrollment
+    WHERE edition_id = p_edition_id;
+
+    IF v_enrolled_count >= v_capacity THEN
+        RAISE EXCEPTION 'Course edition is at full capacity.';
+    END IF;
+
+    -- 5. Insert in course edition
+    INSERT INTO course_enrollment (student_id, edition_id, enrollment_date)
+    VALUES (p_student_id, p_edition_id, p_date);
+
+    -- 6. Iterate classes array and enroll student in each one
+    FOREACH v_class_id IN ARRAY p_classes
+    LOOP
+        INSERT INTO class_enrollment (student_id, class_id)
+        VALUES (p_student_id, v_class_id);
+    END LOOP;
+    
+END;
+$$;
+
+WITH new_person AS (
+    INSERT INTO person (name, email, date_of_birth, password) 
+    VALUES ('Admin Principal', 'admin@uni.pt', '1980-01-01', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9')
+    RETURNING id
+),
+
+new_employee AS (
+    INSERT INTO employee (person_id, hire_date, salary, status)
+    SELECT id, CURRENT_DATE, 12000, 'Active'
+    FROM new_person
+    RETURNING person_id
+)
+
+INSERT INTO staff (person_id,roll) 
+SELECT person_id, 'staff'
+FROM new_employee;
+
+--
+INSERT INTO person (name, email, date_of_birth, password) 
+VALUES ('Prof Coordenador', 'prof@uni.pt', '1980-01-01', '00624b02e1f9b996a3278f559d5d55313552ad2c0bafc82adfd975c12df61eaf');
+
+INSERT INTO employee (person_id,hire_date,salary,status) VALUES (2,CURRENT_DATE,3200,'Active');
+INSERT INTO instructor (person_id) VALUES (2);
+
+-- 1. Degrees
+INSERT INTO degree (degree_id, degree_name, credits, months_duration, tuition) VALUES (1, 'Engenharia Informática',180, 36, 3000);
+
+-- 2. Courses
+INSERT INTO course (course_id, course_name,credits) VALUES (1, 'Bases de Dados',6);
+INSERT INTO course (course_id, course_name,credits) VALUES (2, 'Machine Learning',5);
+
+-- 3. Link Degree to Course
+INSERT INTO degree_course (degree_id, course_id) VALUES (1, 1);
+INSERT INTO degree_course (degree_id, course_id) VALUES (1, 2);
+
+-- 4. Extracurricular Activities
+INSERT INTO extra_activity (activity_id, name,description,fee,months_duration) VALUES (1, 'Gym - Weight Training','Stay Hard!',100,6);
+INSERT INTO extra_activity (activity_id, name,description,fee,months_duration)  VALUES (2, 'Competitive Programming Club','Stay hard!',75,3);
+
+-- 5. Classrooms (Required by the Annex A description)
+INSERT INTO classroom (classroom_id, campus_building, room_number, capacity) VALUES (1, 'A03', 34, 50);
+INSERT INTO classroom (classroom_id, campus_building, room_number, capacity) VALUES (2, 'A02', 17, 30);
+
+-- 6. Course Edition (Requires coordinator_id = 3)
+INSERT INTO course_edition (edition_id, edition_year, edition_semester, capacity, evaluation_period, course_id, coordinator_id)
+VALUES (1, 2026, 2, 150, 'Epoca Normal', 1, 2);
+
+-- 7. Classes for Edition 1 (Theory and Practical Lab, linking to classrooms)
+INSERT INTO class (class_id,type,start_schedule,subject,edition_id,classroom_id)
+VALUES (1,'T',CURRENT_DATE, 'Microbiologia',1,1);
+
+INSERT INTO class (class_id,type,start_schedule,subject,edition_id,classroom_id)
+VALUES (2,'P',CURRENT_DATE, 'Anatomia II',1,2);
