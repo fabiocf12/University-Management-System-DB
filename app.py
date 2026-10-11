@@ -18,14 +18,14 @@ import logging
 import psycopg2
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import load_dotenv  
 import datetime
 import jwt
 from functools import wraps
 import hashlib
 from flask import request
 
-env_path = Path(__file__).parent.parent / '.env'
+env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 app = flask.Flask(__name__)
@@ -552,7 +552,7 @@ def enroll_activity(activity_id):
             """
             INSERT INTO activity_enrollment (student_id,activity_id,enrollment_date)
             VALUES (%s, %s, %s)"""
-            ,(person_id, activity_id, date))
+            ,(person_id_json, activity_id, date))
         
         conn.commit()
         
