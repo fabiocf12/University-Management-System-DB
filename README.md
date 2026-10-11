@@ -1,142 +1,222 @@
-# 🎓 Academic Management System API
+# Academic Management System API
 
-**Flask · PostgreSQL · JWT**
+**Python · Flask · PostgreSQL · SQL/PLpgSQL · JWT**
 
----
+A REST API for managing university academic data, built with Python, Flask, and PostgreSQL. The project combines relational database operations with JWT authentication and role-based authorization.
 
-## 📌 Overview
+Originally developed for a university database course, the project was later revisited to refactor parts of the backend and improve its authentication and authorization mechanisms.
 
-This repository contains a backend REST API developed in **Python (Flask)** with **PostgreSQL**, originally created for an academic database project and later partially refactored and improved.
+## Overview
 
-The refactor focuses on improving architecture, authentication, and authorization, rather than completing all planned features.
+The API provides a backend for university management workflows, including user authentication, academic data access, and selected registration and enrollment operations.
 
-> [!CAUTION]
-> ### ⚠️ Important
-> This project is not fully implemented. Some endpoints and database interactions were intentionally left unfinished.
-> The goal of this revision was to strengthen core backend concepts, not feature completeness or production readiness.
+The project focuses on:
 
----
+- **REST API development** using Python and Flask.
+- **Relational database management** with PostgreSQL.
+- **Direct SQL queries** using `psycopg2`, without an ORM.
+- **Authentication and authorization** using JWT and role-based access control.
+- **Database logic** implemented through SQL, triggers, and stored procedures.
 
-## 🎯 Main Focus
+## Tech Stack
 
-* 🔐 **Authentication** using JWT
-* 🧭 **Role-based access control**
-* 🗄️ **Relational database interaction** using SQL
-* 🧱 **Clear separation of concerns** in the backend
+| Technology | Purpose |
+|---|---|
+| Python 3 | Backend development |
+| Flask | REST API framework |
+| PostgreSQL | Relational database |
+| psycopg2 | PostgreSQL connectivity |
+| SQL / PL/pgSQL | Queries and database-side logic |
+| PyJWT | JWT handling |
+| python-dotenv | Environment configuration |
+| Postman | API testing |
 
----
+## Key Features
 
-## 🧠 Project Context
+### Authentication and Authorization
 
-This project was initially developed as part of a university course on **Databases and Distributed Systems**.
+- JWT-based user authentication.
+- Role-based access control for staff, students, and instructors.
+- Flask decorators to validate tokens and restrict access to protected endpoints.
+- User identity and role information made available to request handlers through Flask's request context.
 
-Some time after the original submission, it was voluntarily revisited in order to:
-* Improve authentication and authorization logic
-* Refactor poorly designed parts of the original solution
-* Apply better backend and security practices learned over time
+The authentication flow returns a JWT that clients can use when accessing protected endpoints.
 
-*As such, this repository represents a learning-focused refactor, not a production-ready system.*
+### Database Integration
 
----
+- PostgreSQL integration through `psycopg2`.
+- SQL queries executed directly from the Python backend.
+- Relational schema with entities and relationships for university administration.
+- Database-side logic defined through SQL scripts, including triggers and stored procedures.
 
-## 🛠️ Tech Stack
+### Academic Management
 
-| Technology | Role |
-| :--- | :--- |
-| **Python 3** | Core Language |
-| **Flask** | Web Framework |
-| **PostgreSQL** | Relational Database |
-| **psycopg2** | Database Adapter |
-| **JWT** | Authentication & Security |
+The API includes selected operations for user registration, enrollment, and access to academic information. The implemented functionality reflects the current state of the project rather than complete coverage of every originally specified endpoint.
 
----
+## Authentication
 
-## 🔐 Authentication & Authorization
-
-### 🔑 Login
-Users authenticate using JWT.
+### Login
 
 **Endpoint:** `PUT /dbproj/user`
 
-**Request Body:**
-json
+**Request body:**
+
+```json
 {
   "username": "user_name",
   "password": "password"
 }
+```
 
-**Response:**
-json
+**Example response:**
+
+```json
 {
   "status": 200,
   "errors": null,
   "results": "<jwt_token>"
 }
-[!NOTE] The returned token must be included in subsequent requests.
+```
 
-**🪪 JWT Usage:**
-The token must be sent in the Authorization header: Authorization: Bearer <jwt_token>
+### Using the JWT
 
-JWT Payload:
+Include the returned token in the `Authorization` header of subsequent requests:
 
-* user_id
-* role (staff | student | instructor)
-* exp (expiration time)
+```http
+Authorization: Bearer <jwt_token>
+```
 
-## 🧩 Role-Based Access Control
+The token contains user-related claims, including the user ID, role, and expiration time.
 
-Authorization is enforced using Flask decorators, such as:
+### Role-Based Access Control
 
-@token_required
+Protected endpoints use decorators such as `@token_required` and `@role_required(...)` to validate authentication and enforce role restrictions.
 
-@role_required(...)
+This approach centralizes access-control logic and reduces duplication across route handlers.
 
-These decorators validate the JWT, decode and store user information in flask.g.user, and restrict endpoint access based on user role. This approach avoids code duplication and keeps route handlers clean.
+## Database
 
-## 🗄️ Database Design 
-The database follows a relational model with entities such as:
+The database uses a relational model with entities such as:
 
-* person, staff, student_financialaccount, instructor
-* degree, course, courseedition
-* Enrollment and association tables
+- `person`, `staff`, `instructor`, and student-related tables.
+- `degree`, `course`, and `courseedition`.
+- Enrollment and association tables representing relationships between academic entities.
 
-Note: Some tables were automatically generated from a modeling tool, resulting in long table names and multiple association tables for many-to-many relationships. While not ideal, the schema was kept mostly intact to remain aligned with the original academic requirements.
+The initialization script defines the database schema and its database-side logic, and inserts a staff user and a small set of sample academic data.
 
-📌 Implemented / Partially Implemented Features
-✅ Implemented
-[x] JWT authentication
+The schema retains parts of the original academic project design, including association tables generated during the modeling process.
 
-[x] Role detection based on relational tables
+## Project Structure
 
-[x] Secure access control with decorators
+```text
+.
+├── app.py
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── LICENSE
+├── README.md
+├── conceptual_diagram/
+│   └── Conceptual_Diagram.json
+├── postman/
+│   └── University_API_Stubs.postman_collection.json
+└── sql_script/
+    └── script_init.sql
+```
 
-[x] Database connection handling
+## Getting Started
 
-[x] Some registration and enrollment endpoints
+### Prerequisites
 
-❌ Not Fully Implemented
-[ ] Full endpoint coverage
+- Python 3
+- PostgreSQL
+- pip
 
-[ ] Complete data seeding
+Postman or another HTTP client is recommended for testing the API.
 
-[ ] Full consistency across all operations
+### 1. Clone the Repository
 
-## 🧪 Running the Project
-This is an API-only project — there is no frontend. All interactions are performed via HTTP requests, using tools such as:
+```bash
+git clone https://github.com/fabiocf12/University-Management-System-DB.git
+cd University-Management-System-DB
+```
 
-Postman
+Replace the placeholders with your repository URL and directory name.
 
-curl
+### 2. Create a Virtual Environment
 
-Insomnia
+```powershell
+python -m venv .venv
+```
 
-Basic Steps
-Create a PostgreSQL database.
+### 3. Activate the Virtual Environment
 
-Apply the provided SQL schema.
+On Windows using PowerShell:
 
-Configure database credentials and JWT secret.
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
-Run the Flask application.
+On Windows using Command Prompt (CMD):
 
-Interact with the API using an API client.
+```cmd
+.venv\Scripts\activate.bat
+```
+
+### 4. Install Dependencies
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 5. Configure Environment Variables
+
+Create a `.env` file in the repository root using `.env.example` as a template:
+
+```dotenv
+JWT_SECRET_KEY=your_secret_key
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=your_database
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+```
+
+Replace the example values with your local configuration. Use a strong, private JWT secret and do not commit the `.env` file.
+
+### 6. Initialize the Database
+
+Create a PostgreSQL database, then execute `sql_script/script_init.sql` against it.
+
+The script initializes the schema, database-side logic, and sample data. Review the script before running it against any database containing data you want to preserve.
+
+### 7. Run the API
+
+From the repository root, with the virtual environment activated, run:
+
+```bash
+python app.py
+```
+
+### 8. Test the Endpoints
+
+Import `postman/University_API_Stubs.postman_collection.json` into Postman to access the API request collection.
+
+You can also interact with the API using curl or another HTTP client. For protected endpoints, include a valid JWT in the `Authorization` header.
+
+## Project Status and Limitations
+
+This repository is a learning-focused backend project and is **not production-ready**.
+
+- Core authentication and authorization mechanisms are implemented.
+- Selected registration and enrollment operations are available.
+- Some originally specified endpoints and complex database interactions remain incomplete.
+- Data seeding and consistency across all operations are not fully implemented.
+
+The project is being maintained as a practical exercise in backend development, SQL, relational database design, and API security.
+
+## Background
+
+This project originated as a university assignment focused on databases and distributed systems. It was subsequently revisited to improve selected parts of the backend and consolidate practical experience with Flask, PostgreSQL, SQL, and authentication.
+
+The repository reflects the current implementation and its limitations rather than claiming complete implementation of the original specification.
