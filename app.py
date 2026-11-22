@@ -29,7 +29,7 @@ env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 app = flask.Flask(__name__)
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  
 
 
 StatusCodes = {
@@ -136,6 +136,9 @@ def insert_person(cursor, data):
     user_id = cursor.fetchone()[0]
     return user_id
 
+@app.route("/")
+def health():
+    return {"status": "ok"}
 
 @app.route('/dbproj/user', methods=['PUT'])
 def login_user():
