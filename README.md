@@ -20,16 +20,17 @@ The project focuses on:
 
 ## Tech Stack
 
-| Technology | Purpose |
+| Technology     | Purpose |
 |---|---|
-| Python 3 | Backend development |
-| Flask | REST API framework |
-| PostgreSQL | Relational database |
-| psycopg2 | PostgreSQL connectivity |
+| Python 3       | Backend development |
+| Flask          | REST API framework |
+| PostgreSQL     | Relational database |
+| psycopg2       | PostgreSQL connectivity |
 | SQL / PL/pgSQL | Queries and database-side logic |
-| PyJWT | JWT handling |
-| python-dotenv | Environment configuration |
-| Postman | API testing |
+| PyJWT          | JWT handling |
+| python-dotenv  | Environment configuration |
+| Postman        | API testing |
+| Docker / Docker Compose | Containerized setup (API + PostgreSQL) |
 
 ## Key Features
 
@@ -112,6 +113,9 @@ The schema retains parts of the original academic project design, including asso
 .
 ├── app.py
 ├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
 ├── .env.example
 ├── .gitignore
 ├── LICENSE
@@ -126,30 +130,64 @@ The schema retains parts of the original academic project design, including asso
 
 ## Getting Started
 
-### Prerequisites
+### Option A: Run with Docker (recommended)
 
-- Python 3
-- PostgreSQL
-- pip
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine with Compose).
 
-Postman or another HTTP client is recommended for testing the API.
-
-### 1. Clone the Repository
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/fabiocf12/University-Management-System-DB.git
 cd University-Management-System-DB
 ```
 
-Replace the placeholders with your repository URL and directory name.
+2. Create your `.env` file from the template and set your own values:
 
-### 2. Create a Virtual Environment
+```bash
+cp .env.example .env        
+```
+
+3. Build and start the API and the database:
+
+```bash
+docker compose up --build
+```
+
+The API is available at `http://localhost:8080`. On the first run, PostgreSQL executes the scripts in `sql_script/` automatically, creating the schema, database-side logic and sample data.
+
+Useful commands:
+
+```bash
+docker compose down        # stop and remove containers (data is kept)
+docker compose down -v     # also delete the database volume (fresh start)
+docker compose logs -f api # follow the API logs
+```
+
+### Option B: Run locally without Docker
+
+### Prerequisites
+
+- Python 3
+- PostgreSQL
+- pip
+
+note : Postman or another HTTP client is recommended for testing the API.
+
+1. Clone the Repository
+
+```bash
+git clone https://github.com/fabiocf12/University-Management-System-DB.git
+cd University-Management-System-DB
+```
+
+
+2. Create a Virtual Environment
 
 ```powershell
 python -m venv .venv
 ```
 
-### 3. Activate the Virtual Environment
+3. Activate the Virtual Environment
 
 On Windows using PowerShell:
 
@@ -163,13 +201,13 @@ On Windows using Command Prompt (CMD):
 .venv\Scripts\activate.bat
 ```
 
-### 4. Install Dependencies
+4. Install Dependencies
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-### 5. Configure Environment Variables
+5. Configure Environment Variables
 
 Create a `.env` file in the repository root using `.env.example` as a template:
 
@@ -182,9 +220,11 @@ DB_USER=your_database_user
 DB_PASSWORD=your_database_password
 ```
 
-Replace the example values with your local configuration. Use a strong, private JWT secret and do not commit the `.env` file.
+Replace the example values with your local configuration. Use a strong, private JWT secret!
 
-### 6. Initialize the Database
+### Initialize the Database
+
+> When using Docker (Option A), this step is automatic.
 
 Create a PostgreSQL database, then execute `sql_script/script_init.sql` against it.
 
@@ -217,6 +257,6 @@ The project is being maintained as a practical exercise in backend development, 
 
 ## Background
 
-This project originated as a university assignment focused on databases and distributed systems. It was subsequently revisited to improve selected parts of the backend and consolidate practical experience with Flask, PostgreSQL, SQL, and authentication.
+This project originated as a university assignment focused on databases. It was subsequently revisited to improve selected parts of the backend and consolidate practical experience with Flask, PostgreSQL, SQL, and authentication, docker..
 
 The repository reflects the current implementation and its limitations rather than claiming complete implementation of the original specification.
